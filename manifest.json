@@ -1,0 +1,15 @@
+{
+  "name": "中世キャラクター診断",
+  "short_name": "中世診断",
+  "start_url": "/personality-quiz/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7F77DD",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
