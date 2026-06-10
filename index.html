@@ -1,0 +1,142 @@
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">8つの質問に答えて、自分に近い中世のキャラクターを診断するインタラクティブな性格診断クイズです。</h2>
+<div style="padding: 0.5rem 0;">
+  <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+    <span style="font-size:14px; font-weight:500;">中世キャラクター診断</span>
+    <span id="prog-label" style="font-size:13px; color:var(--color-text-secondary);">質問 1 / 8</span>
+  </div>
+  <div style="height:6px; background:var(--color-background-secondary); border-radius:3px; margin-bottom:1.5rem;">
+    <div id="prog-bar" style="height:6px; width:12.5%; background:#7F77DD; border-radius:3px; transition:width 0.3s;"></div>
+  </div>
+  <div id="quiz"></div>
+  <div id="result" style="display:none;"></div>
+</div>
+<script>
+const TYPES = {
+  knight:    { name: "騎士", icon: "ti-shield", bg: "#E6F1FB", fg: "#0C447C", bar: "#378ADD",
+    desc: "忠義と勇気の人。あなたは大切な人や信念のためなら、困難にも真っ向から立ち向かうタイプです。約束を守り、責任感が強く、周囲からの信頼は絶大。一方で、自分に厳しすぎて抱え込みがちな面も。たまには鎧を脱いで休みましょう。" },
+  wizard:    { name: "魔法使い", icon: "ti-wand", bg: "#EEEDFE", fg: "#3C3489", bar: "#7F77DD",
+    desc: "知識と探究の人。あなたは「なぜ?」を追いかけずにいられない知的好奇心の持ち主。一人で深く考える時間を愛し、独自の視点で物事の本質を見抜きます。周囲には少しミステリアスに見えることも。その叡智は王国の宝です。" },
+  bard:      { name: "吟遊詩人", icon: "ti-music", bg: "#FBEAF0", fg: "#72243E", bar: "#D4537E",
+    desc: "言葉と感性の人。あなたは場を明るくし、人の心を動かす天性の表現者。共感力が高く、誰とでもすぐ打ち解けられます。自由を愛するぶん、縛られるのは苦手。あなたの歌(言葉)は、酒場どころか王宮までも魅了するでしょう。" },
+  merchant:  { name: "商人", icon: "ti-coin", bg: "#FAEEDA", fg: "#633806", bar: "#EF9F27",
+    desc: "実利と交渉の人。あなたは現実をしっかり見据え、限られた資源で最大の成果を出す才覚の持ち主。人脈づくりと駆け引きが得意で、どんな状況でも落とし所を見つけます。シルクロードの果てまで商機を見逃さない、王国経済の要です。" },
+  alchemist: { name: "錬金術師", icon: "ti-flask", bg: "#E1F5EE", fg: "#085041", bar: "#1D9E75",
+    desc: "実験と革新の人。あなたは常識を疑い、新しいやり方を試さずにいられない発明家気質。失敗を恐れず、試行錯誤そのものを楽しめます。周囲が驚くようなひらめきで、鉛を黄金に…変えられるかはさておき、世界を一歩前に進める存在です。" },
+  ruler:     { name: "君主", icon: "ti-crown", bg: "#FAECE7", fg: "#712B13", bar: "#D85A30",
+    desc: "決断と統率の人。あなたは全体を見渡し、進むべき方向を示すリーダー気質。責任を引き受ける覚悟があり、決めるべき時に決められます。ときに孤独を感じることもありますが、その玉座からの眺めと判断が、民(仲間)を導いています。" }
+};
+const QUESTIONS = [
+  { q: "休日の過ごし方は?", opts: [
+    ["体を動かして鍛える・運動する", "knight"],
+    ["本や動画で知らないことを学ぶ", "wizard"],
+    ["友達と集まってワイワイ過ごす", "bard"],
+    ["新しい趣味や実験的なことを試す", "alchemist"]]},
+  { q: "友達が困っていたら?", opts: [
+    ["何があっても駆けつけて守る", "knight"],
+    ["原因を分析して解決策を考える", "wizard"],
+    ["まず話を聞いて気持ちを軽くする", "bard"],
+    ["使える人脈やリソースを紹介する", "merchant"]]},
+  { q: "グループでのあなたの役割は?", opts: [
+    ["方針を決めてみんなを引っ張る", "ruler"],
+    ["ムードメーカーとして場を盛り上げる", "bard"],
+    ["裏方で計画や調整を担当する", "merchant"],
+    ["新しいアイデアを出す係", "alchemist"]]},
+  { q: "新しい挑戦を前にしたら?", opts: [
+    ["怖くてもまず飛び込む", "knight"],
+    ["十分に調べて理解してから動く", "wizard"],
+    ["とりあえず試して失敗から学ぶ", "alchemist"],
+    ["リスクとリターンを見極めて判断", "merchant"]]},
+  { q: "一番大切にしている価値観は?", opts: [
+    ["誠実さ・約束を守ること", "knight"],
+    ["真理・深く理解すること", "wizard"],
+    ["自由・楽しさ・つながり", "bard"],
+    ["成果・決断・責任", "ruler"]]},
+  { q: "トラブルが起きたとき、最初にすることは?", opts: [
+    ["先頭に立って対処する", "knight"],
+    ["冷静に状況を整理・分析する", "wizard"],
+    ["関係者と交渉して落とし所を探す", "merchant"],
+    ["全体を見て指示を出す", "ruler"]]},
+  { q: "理想の働き方は?", opts: [
+    ["決まった型より、自由な発想で創る", "alchemist"],
+    ["人と関わり、表現できる仕事", "bard"],
+    ["数字や結果がはっきり出る仕事", "merchant"],
+    ["チームを率いて大きな目標を達成", "ruler"]]},
+  { q: "もし王国に住むなら、住みたい場所は?", opts: [
+    ["城壁のそば。いつでも国を守れる場所", "knight"],
+    ["静かな塔。書物と星空に囲まれて", "wizard"],
+    ["にぎやかな市場や酒場の近く", "bard"],
+    ["工房。怪しい煙が出ても許される場所", "alchemist"]]}
+];
+let current = 0;
+const scores = { knight:0, wizard:0, bard:0, merchant:0, alchemist:0, ruler:0 };
+const quizEl = document.getElementById("quiz");
+const resultEl = document.getElementById("result");
+const progBar = document.getElementById("prog-bar");
+const progLabel = document.getElementById("prog-label");
+
+function renderQuestion() {
+  const item = QUESTIONS[current];
+  progLabel.textContent = "質問 " + (current+1) + " / " + QUESTIONS.length;
+  progBar.style.width = Math.round(((current+1)/QUESTIONS.length)*100) + "%";
+  let html = '<p style="font-size:17px; font-weight:500; margin:0 0 1rem;">' + item.q + '</p><div style="display:flex; flex-direction:column; gap:10px;">';
+  item.opts.forEach((o, i) => {
+    html += '<button data-i="' + i + '" style="text-align:left; width:100%; padding:12px 16px; font-size:15px; line-height:1.5;">' + o[0] + '</button>';
+  });
+  html += '</div>';
+  quizEl.innerHTML = html;
+  quizEl.querySelectorAll("button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      scores[item.opts[+btn.dataset.i][1]]++;
+      current++;
+      if (current < QUESTIONS.length) renderQuestion();
+      else showResult();
+    });
+  });
+}
+
+function showResult() {
+  progLabel.textContent = "診断完了";
+  progBar.style.width = "100%";
+  const keys = Object.keys(scores);
+  let best = keys[0];
+  keys.forEach(k => { if (scores[k] > scores[best]) best = k; });
+  const t = TYPES[best];
+  const max = Math.max(...keys.map(k => scores[k]), 1);
+  let bars = "";
+  keys.forEach(k => {
+    const tt = TYPES[k];
+    const pct = Math.round((scores[k]/max)*100);
+    bars += '<div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">'
+      + '<span style="font-size:13px; color:var(--color-text-secondary); width:72px; flex-shrink:0;">' + tt.name + '</span>'
+      + '<div style="flex:1; height:8px; background:var(--color-background-secondary); border-radius:4px;">'
+      + '<div style="height:8px; width:' + pct + '%; background:' + tt.bar + '; border-radius:4px;"></div></div>'
+      + '<span style="font-size:13px; width:16px; text-align:right; color:var(--color-text-secondary);">' + scores[k] + '</span></div>';
+  });
+  resultEl.innerHTML =
+    '<div style="background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:1.25rem;">'
+    + '<div style="display:flex; align-items:center; gap:14px; margin-bottom:12px;">'
+    + '<div style="width:56px; height:56px; border-radius:50%; background:' + t.bg + '; display:flex; align-items:center; justify-content:center; flex-shrink:0;">'
+    + '<i class="ti ' + t.icon + '" style="font-size:28px; color:' + t.fg + ';" aria-hidden="true"></i></div>'
+    + '<div><p style="font-size:13px; color:var(--color-text-secondary); margin:0;">あなたのタイプは…</p>'
+    + '<p style="font-size:22px; font-weight:500; margin:0;">' + t.name + '</p></div></div>'
+    + '<p style="font-size:15px; line-height:1.7; margin:0 0 1.25rem;">' + t.desc + '</p>'
+    + '<p style="font-size:13px; font-weight:500; color:var(--color-text-secondary); margin:0 0 8px;">あなたの傾向</p>'
+    + bars
+    + '<div style="display:flex; gap:10px; margin-top:1.25rem;">'
+    + '<button id="retry" style="flex:1;"><i class="ti ti-refresh" style="font-size:16px; vertical-align:-2px; margin-right:6px;" aria-hidden="true"></i>もう一度</button>'
+    + '<button id="more" style="flex:1;">詳しく聞く ↗</button></div></div>';
+  quizEl.style.display = "none";
+  resultEl.style.display = "block";
+  document.getElementById("retry").addEventListener("click", () => {
+    keys.forEach(k => scores[k] = 0);
+    current = 0;
+    resultEl.style.display = "none";
+    quizEl.style.display = "block";
+    renderQuestion();
+  });
+  document.getElementById("more").addEventListener("click", () => {
+    sendPrompt("診断結果が「" + t.name + "」タイプでした。このタイプの強み・弱み・相性のいいタイプを詳しく教えて");
+  });
+}
+renderQuestion();
+</script>
